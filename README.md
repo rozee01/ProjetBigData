@@ -90,13 +90,10 @@ graph LR
 
 ---
 
-**Team**: [Your Names]  
-**Last Updated**: YYYY-MM-DD  
+**Team**: Arij Thabet, Mohamed Saber Azzaouzi, Mohamed Hannachi  
 
 --- 
 
 *Appendices*:  
 - For troubleshooting Kafka, see [this guide](link).  
-- Sample code snippets are in `/scripts`.  
 
-Let me know if you'd like to expand any section (e.g., detailed code examples or infrastructure setup)!
