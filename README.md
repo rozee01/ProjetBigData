@@ -15,25 +15,23 @@
 ---
 
 ## 🛠️ Step 1: Foundational Setup  
-### 1. **Data Sources**  
-#### Streaming: **Twitter API**  
-- **Why?** Tweets with geolocation provide real-time insights into music discussions.  
-- **Fields to Extract**:  
-  - Tweet text (e.g., "Listening to [song] by [artist]").  
-  - Geolocation (city/country).  
-  - Timestamp.  
-- **Tools**:  
-  - `tweepy` (Python) or `Twitter4J` (Java) to stream tweets.  
-  - Filter keywords: `#NowPlaying`, "listening to", "spotify", etc.  
+## 📊 Data Pipeline
 
-#### Batch: **Spotify Top Charts**  
-- **Why?** Baseline data for comparing trends across regions.  
-- **Sources**:  
-  - [Spotify Charts (API)](https://spotifycharts.com/) or [Kaggle datasets](https://www.kaggle.com/datasets).  
-- **Fields to Extract**:  
-  - Top 50 songs/artists per country.  
-  - Genres (from Spotify’s artist metadata).  
+Our data pipeline consists of two main flows:
 
+### Twitter Data Flow (Streaming)
+1. Capture tweets with geolocation and music-related content
+2. Process through Kafka streams
+3. Analyze in real-time with Spark Streaming
+4. Enrich with geographical and music metadata
+5. Store in time-series and data warehouse
+
+### Spotify Data Flow (Batch)
+1. Daily extraction of top charts by country
+2. Process and transform with Spark batch jobs
+3. Join with Twitter data for enhanced insights
+4. Generate aggregated metrics and trends
+5. Update dashboard visualizations
 ---
 
 ### 2. **Target Architecture**  
@@ -76,20 +74,7 @@ flowchart TD
     end
 ```  
 
-#### Components:  
-- **Ingestion**:  
-  - **Kafka**: Buffers real-time tweets for scalable consumption.  
-  - **HDFS/S3**: Stores historical Spotify data.  
-- **Processing**:  
-  - **Spark Streaming/Flink**: Cleans, enriches, and aggregates tweets (e.g., extract artist/genre).  
-  - **Spark Batch**: Joins Spotify data with Twitter trends (e.g., "Is X artist trending on Twitter but missing on Spotify?").  
-- **Storage**:  
-  - **Database Options**:  
-    - *Time-series*: InfluxDB (for dashboarding).  
-    - *Analytical*: PostgreSQL or Cassandra (for joins).  
-- **Visualization**:  
-  - **Grafana**: Real-time dashboards with geo-maps.  
-  - **Streamlit**: Customizable Python dashboard (e.g., genre battles).  
+
 
 ---
 
