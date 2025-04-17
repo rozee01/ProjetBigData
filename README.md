@@ -38,13 +38,42 @@
 
 ### 2. **Target Architecture**  
 ```mermaid
-graph LR
-  A[Twitter API] -->|Stream| B[Kafka]
-  C[Spotify Batch Data] -->|ETL| D[HDFS/S3]
-  B -->|Real-time| E[Spark Streaming/Flink]
-  D -->|Batch| F[Spark Batch]
-  E & F --> G[(Database)]
-  G --> H[Dashboard]
+flowchart TD
+    subgraph Data Sources
+        TD[Twitter Data\nw/ Geolocation] -->|Streaming| KS[Kafka Stream]
+        SD[Spotify Top Charts\nby Country] -->|Batch ETL| DL[Data Lake]
+    end
+
+    subgraph Ingestion Layer
+        KS -->|Real-time Processing| SP[Spark Streaming]
+        SP -->|Processed Tweets| DL
+        DL -->|Batch Processing| BP[Spark Batch Processing]
+    end
+
+    subgraph Storage Layer
+        BP -->|Transformed Data| DW[Data Warehouse]
+        SP -->|Real-time Metrics| TS[Time Series DB]
+        DW -->|Aggregated Data| RC[Redis Cache]
+    end
+
+    subgraph Analytics Layer
+        DW -->|OLAP Queries| AN[Analytics Engine]
+        TS -->|Time Series Analysis| AN
+        AN -->|ML Models| ML[Genre/Artist Prediction]
+    end
+
+    subgraph API Layer
+        RC -->|Cached Results| API[REST API]
+        TS -->|Real-time Data| API
+        DW -->|Historical Data| API
+    end
+
+    subgraph Presentation Layer
+        API --> WA[Web Application]
+        WA --> HM[Heatmap Component]
+        WA --> LA[Local Artists Component]
+        WA --> GB[Genre Battle Component]
+    end
 ```  
 
 #### Components:  
