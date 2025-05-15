@@ -1,6 +1,3 @@
-Here's the complete cron job setup guide in Markdown format:
-
-```markdown
 # Spotify Data Scraper - Cron Job Setup Guide
 
 ## 📋 Prerequisites
