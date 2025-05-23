@@ -3,3 +3,4 @@ spotify_cleaned.csv
 venv/
 .env
 __pycache__/
+artifacts/
