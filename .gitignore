@@ -1,1 +1,5 @@
 spotify_dataset.csv
+spotify_cleaned.csv
+venv/
+.env
+__pycache__/
