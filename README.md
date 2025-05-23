@@ -37,40 +37,31 @@ Our data pipeline consists of two main flows:
 ### 2. **Target Architecture**  
 ```mermaid
 flowchart TD
+    %% Data Sources
     subgraph Data Sources
-        TD[Twitter Data\nw/ Geolocation] -->|Streaming| KS[Kafka Stream]
-        SD[Spotify Top Charts\nby Country] -->|Batch ETL| DL[Data Lake]
+        TW_Stream[TwitterStreaming] -->|Kafka| K1[Kafka Topic - Twitter]
+        SP_Batch[Spotify Batch: CSV] 
     end
 
-    subgraph Ingestion Layer
-        KS -->|Real-time Processing| SP[Spark Streaming]
-        SP -->|Processed Tweets| DL
-        DL -->|Batch Processing| BP[Spark Batch Processing]
+    %% Processing Layer
+    subgraph Processing
+        K1 --> SS1[Spark Streaming - Twitter]
+        SP_Batch-->|Batch Load| SB2[Spark Batch - Spotify]
     end
 
-    subgraph Storage Layer
-        BP -->|Transformed Data| DW[Data Warehouse]
-        SP -->|Real-time Metrics| TS[Time Series DB]
-        DW -->|Aggregated Data| RC[Redis Cache]
+    %% Unified NoSQL Storage
+    subgraph Storage_NoSQL
+        SS1 --> NOSQL[NoSQL_DB: Mongo DB]
+        SB2 --> NOSQL
     end
 
-    subgraph Analytics Layer
-        DW -->|OLAP Queries| AN[Analytics Engine]
-        TS -->|Time Series Analysis| AN
-        AN -->|ML Models| ML[Genre/Artist Prediction]
-    end
-
-    subgraph API Layer
-        RC -->|Cached Results| API[REST API]
-        TS -->|Real-time Data| API
-        DW -->|Historical Data| API
-    end
-
-    subgraph Presentation Layer
-        API --> WA[Web Application]
-        WA --> HM[Heatmap Component]
-        WA --> LA[Local Artists Component]
-        WA --> GB[Genre Battle Component]
+    %% API + Dashboard
+    subgraph Dashboard Layer
+        NOSQL --> API[REST API]
+        API --> UI[Web Dashboard]
+        UI --> HM[Heatmap]
+        UI --> LA[Local Artists]
+        UI --> GB[Genre Battle]
     end
 ```  
 
