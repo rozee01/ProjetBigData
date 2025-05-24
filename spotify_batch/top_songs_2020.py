@@ -1,17 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, sum as _sum, row_number
 from pyspark.sql.window import Window
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
-from dotenv import load_dotenv
-import os
-load_dotenv()  # Load variables from .env
-
-username = os.getenv("MONGO_USERNAME")
-password = os.getenv("MONGO_PASSWORD")
-def connect_to_mongo():
-    connection_string = f"mongodb+srv://{username}:{password}@projetbigdata.bg6dron.mongodb.net/?retryWrites=true&w=majority&appName=ProjetBigData"
-    return MongoClient(connection_string, server_api=ServerApi("1"))
+from mongo_cnx import save_to_mongo
 
 def process_spotify_data(input_path):
     spark = SparkSession.builder \
@@ -42,16 +32,9 @@ def process_spotify_data(input_path):
     spark.stop()
     return result
 
-def save_to_mongo(records):
-    client = connect_to_mongo()
-    db = client.ProjetBigDataDB # You can choose any DB name
-    collection = db["top_song_2020"]
-    collection.drop()  # optional: clear previous results
-    collection.insert_many(records)
-    print("✅ Data saved to MongoDB.")
 
 if __name__ == "__main__":
 
     input_path = "spotify_cleaned.csv"  
     results = process_spotify_data(input_path)
-    save_to_mongo(results)
+    save_to_mongo(results,"top_song_2020")
