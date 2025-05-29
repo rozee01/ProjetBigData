@@ -2,8 +2,13 @@
 import requests
 import pandas as pd
 import os
+import io
 from datetime import datetime
 import logging
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from mongo_cnx import save_to_mongo
+
 
 # Configuration
 OUTPUT_DIR = "data/spotify_charts"
@@ -13,11 +18,11 @@ CHART_TYPE = "regional"  # "regional" or "viral"
 DATE = datetime.now().strftime("%Y-%m-%d")
 
 # Set up logging
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# logging.basicConfig(
+#     filename=LOG_FILE,
+#     level=logging.INFO,
+#     format='%(asctime)s - %(levelname)s - %(message)s'
+# )
 
 def fetch_spotify_chart(country, chart_type):
     """Fetch daily chart data from Spotify"""
@@ -28,7 +33,7 @@ def fetch_spotify_chart(country, chart_type):
         response.raise_for_status()
         
         # Parse CSV data
-        df = pd.read_csv(url)
+        df = pd.read_csv(io.StringIO(response.text))
         
         # Add metadata
         df['country'] = country
@@ -59,6 +64,8 @@ def main():
         df = fetch_spotify_chart(country, CHART_TYPE)
         if df is not None:
             save_data(df, country)
+            records = df.to_dict(orient='records')
+            save_to_mongo(records, "spotify_charts")
             all_data.append(df)
     
     # Combine all data if needed

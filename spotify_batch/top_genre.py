@@ -3,6 +3,8 @@ from pyspark.sql.functions import col, sum as _sum, row_number
 from pyspark.sql.window import Window
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from mongo_cnx import save_to_mongo
 
 def process_spotify_data(input_path):
