@@ -1,0 +1,62 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - app-network
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    networks:
+      - app-network
+
+  spark-app:
+    image: bitnami/spark:3.5.0 # Ensure this Spark version is compatible with your connectors
+    container_name: spark-app
+    depends_on:
+      - kafka
+    environment:
+      SPARK_MODE: client # spark-submit will run in client mode
+      MONGO_URI: "${MONGO_URI}" # Takes value from .env file
+      KAFKA_BROKERS_DOCKER: "kafka:29092" # For spark_processor.py to connect to Kafka container
+    volumes:
+      - ./now-playing-streamer:/app/now-playing-streamer # Mount your app
+      - ./data:/app/data # If spark needs to read local data files (not used in current processor)
+      - ./.env:/app/.env # Mount the .env file
+      - ./requirements.txt:/app/requirements.txt # Mount the main requirements file
+    command: >
+      sh -c "pip install --no-cache-dir -r /app/requirements.txt && \
+      spark-submit \
+      --master local[*] \
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.mongodb.spark:mongo-spark-connector_2.12:10.2.1 \
+      --conf spark.kafka.bootstrap.servers=kafka:29092 \
+      /app/now-playing-streamer/processor/spark_processor.py"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
