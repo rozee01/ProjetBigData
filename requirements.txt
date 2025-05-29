@@ -1,0 +1,6 @@
+pandas==2.2.0
+kafka-python>=2.0.0
+pyspark>=3.0.0
+pymongo>=4.0.0
+python-dotenv>=0.15.0
+websockets==12.0 
