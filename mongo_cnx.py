@@ -15,6 +15,12 @@ def connect_to_mongo():
     db = client.ProjetBigDataDB
     return db
 
+def save_to_mongo(records,collection_name):
+    db = connect_to_mongo()
+    collection = db[collection_name]  
+    collection.drop()
+    collection.insert_many(records)
+    print("✅ Top streamed songs saved to MongoDB.")
 if __name__ == "__main__":
     try:
         client= connect_to_mongo()

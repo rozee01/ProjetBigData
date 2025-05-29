@@ -1,7 +1,9 @@
 import requests
 import pandas as pd
 from datetime import datetime
-import os
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from mongo_cnx import save_to_mongo
 
 def get_spotify_chart():
     url = 'https://charts-spotify-com-service.spotify.com/public/v0/charts'
@@ -28,7 +30,9 @@ def save_chart_to_file():
     
     # Get the chart data
     df = get_spotify_chart()
-    
+    records= df.to_dict(orient='records')
+    # Save to MongoDB
+    save_to_mongo(records, "daily_charts")
     # Save to CSV
     df.to_csv(filename, index=False)
     print(f"Chart saved to {filename}")
