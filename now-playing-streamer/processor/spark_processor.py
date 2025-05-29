@@ -1,7 +1,7 @@
 import os
 import json
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, current_timestamp
+from pyspark.sql.functions import from_json, col, current_timestamp,to_json, struct
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, LongType, MapType
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -78,24 +78,40 @@ def process_batch(df, epoch_id):
 
     records_to_insert = [row.asDict(recursive=True) for row in collected_rows]
 
+    # try:
+    #     client = MongoClient(MONGO_URI)
+    #     db_name_parts = MONGO_URI.split('/')
+    #     db_name = 'big_data_project' # Default DB name
+    #     if len(db_name_parts) > 3:
+    #         db_name_candidate = db_name_parts[-1].split('?')[0]
+    #         if db_name_candidate: # Ensure it's not empty if URI ends with /
+    #             db_name = db_name_candidate
+        
+    #     db = client[db_name]
+    #     collection = db[MONGO_COLLECTION_NAME]
+        
+    #     result = collection.insert_many(records_to_insert)
+    #     print(f"Epoch {epoch_id}: Successfully inserted {len(result.inserted_ids)} records into MongoDB collection '{MONGO_COLLECTION_NAME}' in database '{db_name}'.")
+    #     client.close()
+    # except Exception as e:
+    #     print(f"Epoch {epoch_id}: Error writing to MongoDB: {e}")
+    #     # Potentially add more robust error handling, e.g., retries or dead-letter queue
+    # --- Write to Kafka topic 'result' ---
     try:
-        client = MongoClient(MONGO_URI)
-        db_name_parts = MONGO_URI.split('/')
-        db_name = 'big_data_project' # Default DB name
-        if len(db_name_parts) > 3:
-            db_name_candidate = db_name_parts[-1].split('?')[0]
-            if db_name_candidate: # Ensure it's not empty if URI ends with /
-                db_name = db_name_candidate
-        
-        db = client[db_name]
-        collection = db[MONGO_COLLECTION_NAME]
-        
-        result = collection.insert_many(records_to_insert)
-        print(f"Epoch {epoch_id}: Successfully inserted {len(result.inserted_ids)} records into MongoDB collection '{MONGO_COLLECTION_NAME}' in database '{db_name}'.")
-        client.close()
+        # Prepare the DataFrame for Kafka (must have 'value' column as string)
+        kafka_df = df_enriched.withColumn(
+            "value", to_json(struct([df_enriched[x] for x in df_enriched.columns]))
+        ).select("value")
+
+        # Write to Kafka
+        kafka_df.write \
+            .format("kafka") \
+            .option("kafka.bootstrap.servers", "kafka:29092") \
+            .option("topic", "result") \
+            .save()
+        print(f"Epoch {epoch_id}: Successfully wrote batch to Kafka topic 'result'.")
     except Exception as e:
-        print(f"Epoch {epoch_id}: Error writing to MongoDB: {e}")
-        # Potentially add more robust error handling, e.g., retries or dead-letter queue
+        print(f"Epoch {epoch_id}: Error writing to Kafka topic 'result': {e}")
 
 def main():
     print("Starting Spark Streaming processor...")
